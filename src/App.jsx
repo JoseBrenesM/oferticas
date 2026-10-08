@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   ArrowDownUp, ArrowRight, ArrowUpRight, BadgeCheck, Check,
-  ChevronDown, ChevronLeft, ChevronRight, CircleHelp, Heart, Menu, Search, ShieldCheck, MessageCircle, Send,
+  ChevronDown, ChevronLeft, ChevronRight, CircleHelp, Heart, Menu, Search,
   Star, Trash2, X,
 } from 'lucide-react'
 import { formatPrice } from './data.js'
@@ -12,25 +12,6 @@ function readSavedOffers() {
   try {
     const storedOffers = JSON.parse(window.localStorage.getItem('oferticas:saved-offers') || '[]')
     return Array.isArray(storedOffers) ? storedOffers.filter((offer) => offer?.id && offer?.name) : []
-  } catch {
-    return []
-  }
-}
-
-function readChatMessages(storageKey) {
-  try {
-    const storedMessages = JSON.parse(window.sessionStorage.getItem(storageKey) || '[]')
-    if (!Array.isArray(storedMessages)) return []
-    return storedMessages
-      .filter((message) => ['user', 'assistant', 'error'].includes(message?.role) && typeof message.text === 'string')
-      .slice(-20)
-      .map((message) => ({
-        role: message.role,
-        text: message.text.slice(0, 1200),
-        sources: Array.isArray(message.sources)
-          ? message.sources.filter((source) => typeof source?.url === 'string' && source.url.startsWith('https://')).slice(0, 3)
-          : [],
-      }))
   } catch {
     return []
   }
@@ -61,7 +42,7 @@ function SearchBox({ query, setQuery, onSearch, compact = false }) {
   )
 }
 
-function OfferCard({ offer, index, saved, onSave, onAsk }) {
+function OfferCard({ offer, index, saved, onSave }) {
   return (
     <article className={`offer-card ${offer.featured ? 'offer-card-featured' : ''}`}>
       <div className="offer-image-wrap">
@@ -87,7 +68,6 @@ function OfferCard({ offer, index, saved, onSave, onAsk }) {
           </div>
           {offer.url ? <a className="offer-link" href={offer.url} target="_blank" rel="noopener noreferrer" aria-label={offer.market === 'us' ? 'Ver oferta en Google Shopping' : `Comprar en ${offer.store}`} title={offer.market === 'us' ? 'Google Shopping' : offer.store}>{offer.market === 'us' ? 'Ver oferta' : 'Comprar'} <ArrowUpRight size={16} /></a> : <span className="offer-link offer-link-disabled">Enlace no disponible</span>}
         </div>
-        <button className="offer-ask-button" type="button" onClick={() => onAsk(offer)} aria-label={`Consultar ${offer.name} con IA`} title={`Resolver dudas sobre ${offer.name}`}><MessageCircle size={15} /> Consultar con IA</button>
       </div>
     </article>
   )
@@ -140,81 +120,6 @@ function SavedOffersModal({ offers, onClose, onRemove }) {
   )
 }
 
-function ProductChat({ offer, productId, sessionId, onClose }) {
-  const [question, setQuestion] = useState('')
-  const messageStorageKey = `oferticas:assistant-messages:${sessionId}:${productId}`
-  const [messages, setMessages] = useState(() => readChatMessages(messageStorageKey))
-  const researchStorageKey = `oferticas:assistant-research:${sessionId}:${productId}`
-  const [researchContext, setResearchContext] = useState(() => {
-    try { return JSON.parse(window.sessionStorage.getItem(researchStorageKey) || 'null') } catch { return null }
-  })
-  const remainingKey = `oferticas:assistant-remaining:${sessionId}:${productId}`
-  const [remaining, setRemaining] = useState(() => {
-    try {
-      const saved = window.sessionStorage.getItem(remainingKey)
-      return saved === null ? 3 : Math.max(0, Math.min(3, Number(saved) || 0))
-    } catch { return 3 }
-  })
-  const [loading, setLoading] = useState(false)
-
-  async function submit(event) {
-    event.preventDefault()
-    const cleanQuestion = question.trim()
-    if (!cleanQuestion || loading || cleanQuestion.length > 300 || remaining <= 0) return
-    setLoading(true)
-    setQuestion('')
-    setMessages((items) => [...items, { role: 'user', text: cleanQuestion }])
-    try {
-      const response = await fetch('/api/products/ask', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId, productName: offer.name, assistantContext: offer.assistantContext, researchContext, question: cleanQuestion, sessionId }),
-      })
-      const data = await response.json()
-      if (Number.isInteger(data.questionsRemaining)) setRemaining(data.questionsRemaining)
-      if (!response.ok) throw new Error(data.error || 'No se pudo responder. Inténtalo de nuevo.')
-      setRemaining(data.questionsRemaining)
-      if (data.researchContext) setResearchContext(data.researchContext)
-      setMessages((items) => [...items, { role: 'assistant', text: data.answer, sources: data.sources || [] }])
-    } catch (error) {
-      setMessages((items) => [...items, { role: 'error', text: error.message || 'No se pudo consultar el asistente.' }])
-    } finally { setLoading(false) }
-  }
-
-  useEffect(() => {
-    try { window.sessionStorage.setItem(remainingKey, String(remaining)) } catch { /* The server still enforces the limit. */ }
-  }, [remaining, remainingKey])
-
-  useEffect(() => {
-    try { window.sessionStorage.setItem(messageStorageKey, JSON.stringify(messages.slice(-20))) } catch { /* Chat history is a convenience; the server still enforces the limit. */ }
-  }, [messages, messageStorageKey])
-
-  useEffect(() => {
-    try {
-      if (researchContext) window.sessionStorage.setItem(researchStorageKey, JSON.stringify(researchContext))
-      else window.sessionStorage.removeItem(researchStorageKey)
-    } catch { /* The server still verifies any research context sent by the client. */ }
-  }, [researchContext, researchStorageKey])
-
-  useEffect(() => {
-    function handleKey(event) { if (event.key === 'Escape') onClose() }
-    window.addEventListener('keydown', handleKey)
-    return () => window.removeEventListener('keydown', handleKey)
-  }, [onClose])
-
-  return <div className="chat-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
-    <section className="product-chat" role="dialog" aria-modal="true" aria-labelledby="chat-title">
-      <header className="product-chat-header"><span className="chat-icon"><MessageCircle size={18} /></span><div><h2 id="chat-title">Sobre este producto</h2><p>{offer.name}</p></div><button type="button" onClick={onClose} aria-label="Cerrar asistente"><X size={18} /></button></header>
-      <div className="chat-context-note">Resuelve dudas sobre compatibilidad, conexiones y especificaciones técnicas. El asistente consulta información oficial disponible y te indica si no puede confirmar un dato.</div>
-      <div className="chat-messages" aria-live="polite">
-        {messages.length === 0 && <div className="chat-welcome">¿Qué quieres saber sobre este producto?<span>Pregunta por sus puertos, compatibilidad o características. Tienes hasta 3 preguntas.</span></div>}
-        {messages.map((message, index) => <div key={`${index}-${message.role}`} className={`chat-message chat-message-${message.role}`}><p>{message.text}</p>{message.sources?.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noopener noreferrer">Fuente: {source.name} ↗</a>)}</div>)}
-        {loading && <div className="chat-message chat-message-assistant"><span className="loading-spinner" /> Pensando…</div>}
-      </div>
-      <footer className="chat-footer"><div className="chat-counter">{remaining}/3 preguntas disponibles</div><form onSubmit={submit}><textarea value={question} maxLength={300} onChange={(event) => setQuestion(event.target.value)} placeholder={remaining ? 'Escribe una pregunta…' : 'No quedan preguntas'} disabled={loading || remaining === 0} aria-label="Pregunta sobre el producto" /><div className="chat-compose-bottom"><span>{question.length}/300</span><button type="submit" disabled={loading || !question.trim() || question.length > 300 || remaining === 0} aria-label="Enviar pregunta"><Send size={16} /> Preguntar</button></div></form></footer>
-    </section>
-  </div>
-}
-
 export default function App() {
   const [query, setQuery] = useState('')
   const [submittedQuery, setSubmittedQuery] = useState('')
@@ -233,16 +138,6 @@ export default function App() {
   const [unavailableSources, setUnavailableSources] = useState([])
   const [requestId, setRequestId] = useState(0)
   const [lastQuery, setLastQuery] = useState('')
-  const [chatOffer, setChatOffer] = useState(null)
-  const [assistantSessionId] = useState(() => {
-    const key = 'oferticas:assistant-session'
-    let id = window.sessionStorage.getItem(key)
-    if (!id) {
-      id = window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`
-      window.sessionStorage.setItem(key, id)
-    }
-    return id
-  })
 
   const availableStores = useMemo(() => {
     const counts = new Map()
@@ -277,7 +172,6 @@ export default function App() {
     setLastQuery(cleaned)
     setSelectedStores([])
     setCurrentPage(1)
-    setChatOffer(null)
     const currentRequestId = requestId + 1
     setRequestId(currentRequestId)
     setSearchState('loading')
@@ -286,7 +180,7 @@ export default function App() {
     fetch('/api/products/search', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: cleaned, market: nextMarket, sessionId: assistantSessionId }),
+      body: JSON.stringify({ query: cleaned, market: nextMarket }),
     })
       .then(async (response) => {
         const data = await response.json()
@@ -346,51 +240,41 @@ export default function App() {
 
   return (
     <div id="inicio" className="app-shell">
-      <div className="demo-ribbon"><span className="demo-dot" /> COMPARADOR DE TECNOLOGÍA <span className="ribbon-divider">/</span> COSTA RICA Y ESTADOS UNIDOS</div>
       <header className="site-header">
         <div className="header-inner">
           <Logo />
           <nav className={`main-nav ${mobileMenu ? 'nav-open' : ''}`} aria-label="Navegación principal">
-            <a className="nav-active" href="#ofertas" onClick={() => setMobileMenu(false)}>Explorar</a>
+            <a className="nav-active" href="#buscador" onClick={() => setMobileMenu(false)}>Buscar</a>
             <a href="#como-funciona" onClick={() => setMobileMenu(false)}>Cómo funciona</a>
-            <a href="#ofertas" onClick={() => setMobileMenu(false)}>Tiendas</a>
           </nav>
           <div className="header-actions">
           <button className="saved-link" onClick={() => setSavedOpen(true)} type="button"><Heart size={17} /> <span>Guardados</span>{savedOffers.length > 0 && <b>{savedOffers.length}</b>}</button>
             <button className="mobile-menu" onClick={() => setMobileMenu(!mobileMenu)} aria-label="Abrir menú" type="button">{mobileMenu ? <X /> : <Menu />}</button>
-            <div className="market-switch" role="group" aria-label="Mercado de búsqueda">
-              <button className={market === 'cr' ? 'market-active' : ''} onClick={() => changeMarket('cr')} type="button"><span>🇨🇷</span> Costa Rica</button>
-              <button className={market === 'us' ? 'market-active' : ''} onClick={() => changeMarket('us')} type="button"><span>🇺🇸</span> Estados Unidos</button>
-            </div>
           </div>
         </div>
       </header>
 
       <main>
-        <section className="hero-section">
-          <div className="hero-decor hero-decor-one" /><div className="hero-decor hero-decor-two" />
+        <section className="hero-section" id="buscador">
           <div className="hero-inner">
             <div className="hero-copy">
-              <div className="hero-kicker"><span className="kicker-spark">✳</span> COMPRAR MEJOR, ASÍ DE SIMPLE</div>
-              <h1>El mismo producto.<br /><span>Un mejor precio.</span></h1>
-              <p className="hero-description">{market === 'cr' ? 'Comparamos precios de tiendas costarricenses. Si publican en dólares, mostramos una referencia aproximada en colones.' : 'Comparamos precios de tecnología en Estados Unidos, en dólares.'}</p>
-              <div className="market-switch hero-market-switch" role="group" aria-label="Mercado de búsqueda">
-                <button className={market === 'cr' ? 'market-active' : ''} onClick={() => changeMarket('cr')} type="button"><span>🇨🇷</span> Costa Rica <small>CRC</small></button>
-                <button className={market === 'us' ? 'market-active' : ''} onClick={() => changeMarket('us')} type="button"><span>🇺🇸</span> Estados Unidos <small>USD</small></button>
-              </div>
+              <p className="hero-kicker">Precios de tiendas locales y de Estados Unidos, en un solo lugar.</p>
+              <h1>Encuentra el mejor<br />precio para ti.</h1>
+              <p className="hero-description">Busca un producto y compara las ofertas disponibles antes de comprar.</p>
               <div className="hero-search"><SearchBox query={query} setQuery={setQuery} onSearch={() => submitSearch()} /></div>
-              <div className="hero-trust"><span><ShieldCheck size={15} /> {market === 'cr' ? 'Tiendas costarricenses' : 'Resultados de Google Shopping'}</span><i /><span>{market === 'cr' ? 'CRC y referencia USD→CRC' : 'Precios en USD'}</span></div>
+              <div className="hero-controls"><div className="market-switch hero-market-switch" role="group" aria-label="Mercado de búsqueda">
+                <button className={market === 'cr' ? 'market-active' : ''} onClick={() => changeMarket('cr')} type="button">Costa Rica</button>
+                <button className={market === 'us' ? 'market-active' : ''} onClick={() => changeMarket('us')} type="button">Estados Unidos</button>
+              </div></div>
             </div>
-            <div className="hero-visual-spacer" aria-hidden="true" />
           </div>
-          <div className="hero-bottom"><span>COMPARA CON CONFIANZA</span><span className="hero-bottom-line" /><span>PRECIOS QUE HACEN SENTIDO</span></div>
         </section>
 
-        <section className="results-section" id="ofertas">
+        {submittedQuery && <section className="results-section" id="ofertas">
           <div className="results-container">
             <div className="results-heading">
               <div>
-                {submittedQuery && <><div className="section-kicker"><span /> {market === 'cr' ? 'COSTA RICA · CRC' : 'ESTADOS UNIDOS · USD'}</div>
+                {submittedQuery && <><div className="section-kicker"><span /> {market === 'cr' ? 'Costa Rica · CRC' : 'Estados Unidos · USD'}</div>
                 <h2>Resultados para <span>“{submittedQuery}”</span></h2>
                 <p className="results-subtitle">{visibleOffers.length} resultados encontrados</p>
                 {convertedOffer && <p className="conversion-disclaimer">iCon e iShop publican el precio en USD. El CRC es aproximado con la tasa de venta de referencia (₡{convertedOffer.exchangeRate.toFixed(2)} por USD, {exchangeRateDate}); el comercio puede aplicar otra tasa.</p>}</>}
@@ -423,7 +307,7 @@ export default function App() {
             {searchState === 'error' && <div className="search-state error-state">{searchError}</div>}
             {searchState === 'success' && unavailableSources.length > 0 && <div className="source-warning">Sin respuesta en esta búsqueda: {unavailableSources.join(', ')}. Se muestran los resultados de las demás tiendas.</div>}
             {searchState !== 'loading' && searchState !== 'error' && visibleOffers.length > 0 && <div className="offer-grid">
-              {pageOffers.map((offer, index) => <OfferCard key={offer.id} offer={offer} index={(currentPage - 1) * RESULTS_PER_PAGE + index} saved={savedOffers.some((item) => item.id === offer.id)} onSave={toggleSave} onAsk={setChatOffer} />)}
+              {pageOffers.map((offer, index) => <OfferCard key={offer.id} offer={offer} index={(currentPage - 1) * RESULTS_PER_PAGE + index} saved={savedOffers.some((item) => item.id === offer.id)} onSave={toggleSave} />)}
             </div>}
             {pageCount > 1 && searchState === 'success' && <nav className="results-pagination" aria-label="Paginación de resultados">
               <button type="button" onClick={() => setCurrentPage((page) => Math.max(1, page - 1))} disabled={currentPage === 1}><ChevronLeft size={17} /> Anterior</button>
@@ -434,26 +318,25 @@ export default function App() {
               ? <div className="search-state">No hay resultados de las tiendas seleccionadas. <button className="store-filter-reset" type="button" onClick={() => setSelectedStores([])}>Mostrar todas las tiendas</button></div>
               : <div className="search-state">No encontramos ofertas con precio y enlace verificables en {market === 'cr' ? 'tiendas costarricenses.' : 'Estados Unidos.'} Prueba otro nombre o modelo.</div>)}
 
-            {submittedQuery && (searchState !== 'success' || visibleOffers.length === 0 || currentPage === pageCount) && <><div className="more-results"><div className="more-rule" /><span>FIN DE RESULTADOS</span><div className="more-rule" /></div>
+            {submittedQuery && (searchState !== 'success' || visibleOffers.length === 0 || currentPage === pageCount) && <><div className="more-results"><div className="more-rule" /><span>Fin de resultados</span><div className="more-rule" /></div>
             <div className="search-again"><div className="search-again-icon"><CircleHelp size={19} /></div><div><strong>¿No encontraste lo que buscabas?</strong><span>Prueba con otra marca o modelo más específico.</span></div><button onClick={() => { document.querySelector('.hero-search input')?.focus(); window.scrollTo({ top: 0, behavior: 'smooth' }) }} type="button">Nueva búsqueda <ArrowRight size={15} /></button></div></>}
           </div>
-        </section>
+        </section>}
 
         <section className="how-section" id="como-funciona">
           <div className="how-container">
-            <div className="how-heading"><span className="section-kicker"><span /> SIN COMPLICACIONES</span><h2>Comprar mejor tiene <span>su ciencia.</span></h2><p>Bueno, en realidad es muy fácil.</p></div>
+          <div className="how-heading"><h2>Compara con claridad.</h2><p>Precios, tiendas y enlaces para elegir dónde comprar.</p></div>
             <div className="steps-grid">
-              <div className="step-card"><span className="step-number">01</span><span className="step-icon"><Search size={20} /></span><h3>Busca lo que quieres</h3><p>Escribe el nombre, marca o modelo del producto que tienes en mente.</p><span className="step-arrow">↗</span></div>
-              <div className="step-card"><span className="step-number">02</span><span className="step-icon"><ArrowDownUp size={20} /></span><h3>Compara en segundos</h3><p>Reunimos las ofertas y ponemos primero el mejor precio.</p><span className="step-arrow">↗</span></div>
-              <div className="step-card"><span className="step-number">03</span><span className="step-icon"><BadgeCheck size={20} /></span><h3>Elige con confianza</h3><p>Revisa la tienda, los detalles y ve directo a la oferta.</p><span className="step-arrow">↗</span></div>
+              <div className="step-card"><span className="step-number">01</span><span className="step-icon"><Search size={20} /></span><h3>Busca el producto</h3><p>Escribe su nombre, marca o modelo.</p></div>
+              <div className="step-card"><span className="step-number">02</span><span className="step-icon"><ArrowDownUp size={20} /></span><h3>Compara las ofertas</h3><p>Ordena los precios y filtra por tienda.</p></div>
+              <div className="step-card"><span className="step-number">03</span><span className="step-icon"><BadgeCheck size={20} /></span><h3>Abre la tienda</h3><p>Revisa los detalles antes de comprar.</p></div>
             </div>
           </div>
         </section>
       </main>
 
-      <footer className="site-footer"><div className="footer-inner"><Logo /><p>Menos buscar. Más encontrar.</p><span>HECHO CON <span className="footer-heart">♥</span> EN COSTA RICA · 2026</span></div></footer>
+      <footer className="site-footer"><div className="footer-inner"><Logo /><p>Menos buscar. Más encontrar.</p><span>Hecho en Costa Rica · 2026</span></div></footer>
       {savedOpen && <SavedOffersModal offers={savedOffers} onClose={closeSaved} onRemove={removeSavedOffer} />}
-      {chatOffer && <ProductChat key={`${chatOffer.id}-${submittedQuery}`} offer={chatOffer} productId={`${market}:${submittedQuery}:${chatOffer.id}`} sessionId={assistantSessionId} onClose={() => setChatOffer(null)} />}
       {notice && <div className="toast" role="status"><Check size={16} />{notice}</div>}
     </div>
   )

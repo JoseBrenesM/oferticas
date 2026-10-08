@@ -1,12 +1,3 @@
-export const categories = [
-  { name: 'Todo', icon: '✳', count: '124' },
-  { name: 'Computadoras', icon: '▧', count: '38' },
-  { name: 'Componentes', icon: '⌘', count: '26' },
-  { name: 'Periféricos', icon: '⌁', count: '31' },
-  { name: 'Monitores', icon: '▣', count: '18' },
-  { name: 'Audio', icon: '◖', count: '11' },
-]
-
 export const offers = [
   {
     id: 1,
@@ -76,12 +67,6 @@ export const offers = [
     rating: '4.5',
     reviews: '212',
   },
-]
-
-export const trendingSearches = [
-  { label: 'RTX 5060', icon: '▦' },
-  { label: 'MacBook Air M4', icon: '▱' },
-  { label: 'Logitech G305', icon: '⌁' },
 ]
 
 export const formatPrice = (price, currency = 'CRC') => new Intl.NumberFormat(currency === 'USD' ? 'en-US' : 'es-CR', {
