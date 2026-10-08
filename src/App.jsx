@@ -15,6 +15,25 @@ function readSavedOffers() {
   }
 }
 
+function readChatMessages(storageKey) {
+  try {
+    const storedMessages = JSON.parse(window.sessionStorage.getItem(storageKey) || '[]')
+    if (!Array.isArray(storedMessages)) return []
+    return storedMessages
+      .filter((message) => ['user', 'assistant', 'error'].includes(message?.role) && typeof message.text === 'string')
+      .slice(-20)
+      .map((message) => ({
+        role: message.role,
+        text: message.text.slice(0, 1200),
+        sources: Array.isArray(message.sources)
+          ? message.sources.filter((source) => typeof source?.url === 'string' && source.url.startsWith('https://')).slice(0, 3)
+          : [],
+      }))
+  } catch {
+    return []
+  }
+}
+
 function Logo() {
   return (
     <a className="brand" href="#inicio" aria-label="Oferticas, inicio">
@@ -64,7 +83,7 @@ function OfferCard({ offer, index, saved, onSave }) {
             <span className="store-avatar" style={{ background: offer.storeColor, color: offer.storeText }}>{offer.initials}</span>
             <span>{offer.store}<BadgeCheck size={13} className="verified" /></span>
           </div>
-          {offer.url ? <a className="offer-link" href={offer.url} target="_blank" rel="noopener noreferrer" aria-label={`Ver oferta de ${offer.store}` } title={offer.market === 'us' ? 'Ver resultado en Google Shopping' : 'Ver tienda'}><ArrowUpRight size={17} /></a> : <span className="offer-link offer-link-disabled" aria-label="Enlace de tienda no disponible"><ArrowUpRight size={17} /></span>}
+          {offer.url ? <a className="offer-link" href={offer.url} target="_blank" rel="noopener noreferrer">{offer.market === 'us' ? 'Ver en Google Shopping' : `Comprar en ${offer.store}`} <ArrowUpRight size={16} /></a> : <span className="offer-link offer-link-disabled">Enlace no disponible</span>}
         </div>
       </div>
     </article>
@@ -120,7 +139,8 @@ function SavedOffersModal({ offers, onClose, onRemove }) {
 
 function ProductChat({ offer, productId, sessionId, onClose }) {
   const [question, setQuestion] = useState('')
-  const [messages, setMessages] = useState([])
+  const messageStorageKey = `oferticas:assistant-messages:${sessionId}:${productId}`
+  const [messages, setMessages] = useState(() => readChatMessages(messageStorageKey))
   const researchStorageKey = `oferticas:assistant-research:${sessionId}:${productId}`
   const [researchContext, setResearchContext] = useState(() => {
     try { return JSON.parse(window.sessionStorage.getItem(researchStorageKey) || 'null') } catch { return null }
@@ -162,6 +182,10 @@ function ProductChat({ offer, productId, sessionId, onClose }) {
   }, [remaining, remainingKey])
 
   useEffect(() => {
+    try { window.sessionStorage.setItem(messageStorageKey, JSON.stringify(messages.slice(-20))) } catch { /* Chat history is a convenience; the server still enforces the limit. */ }
+  }, [messages, messageStorageKey])
+
+  useEffect(() => {
     try {
       if (researchContext) window.sessionStorage.setItem(researchStorageKey, JSON.stringify(researchContext))
       else window.sessionStorage.removeItem(researchStorageKey)
@@ -177,9 +201,9 @@ function ProductChat({ offer, productId, sessionId, onClose }) {
   return <div className="chat-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
     <section className="product-chat" role="dialog" aria-modal="true" aria-labelledby="chat-title">
       <header className="product-chat-header"><span className="chat-icon"><MessageCircle size={18} /></span><div><h2 id="chat-title">Sobre este producto</h2><p>{offer.name}</p></div><button type="button" onClick={onClose} aria-label="Cerrar asistente"><X size={18} /></button></header>
-      <div className="chat-context-note">Respuestas basadas solo en los datos disponibles de esta oferta.</div>
+      <div className="chat-context-note">Resuelve dudas sobre compatibilidad, conexiones y especificaciones técnicas. El asistente consulta información oficial disponible y te indica si no puede confirmar un dato.</div>
       <div className="chat-messages" aria-live="polite">
-        {messages.length === 0 && <div className="chat-welcome">¿Qué quieres saber sobre este producto?<span>Máximo 3 preguntas · hasta 300 caracteres</span></div>}
+        {messages.length === 0 && <div className="chat-welcome">¿Qué quieres saber sobre este producto?<span>Pregunta por sus puertos, compatibilidad o características. Tienes hasta 3 preguntas.</span></div>}
         {messages.map((message, index) => <div key={`${index}-${message.role}`} className={`chat-message chat-message-${message.role}`}><p>{message.text}</p>{message.sources?.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noopener noreferrer">Fuente: {source.name} ↗</a>)}</div>)}
         {loading && <div className="chat-message chat-message-assistant"><span className="loading-spinner" /> Pensando…</div>}
       </div>
