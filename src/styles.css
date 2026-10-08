@@ -221,3 +221,58 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #90b8
 .demo-ribbon{display:none}
 
 .offer-footer{flex-direction:row;align-items:center}
+
+/* Refined cards and a connected, more substantial first-visit layout. */
+.hero-section{background:#e8efe4;border-bottom:0}
+.hero-inner{padding-top:58px;padding-bottom:34px}
+.hero-copy h1{font-size:52px}
+.how-section{padding:30px 0 58px;background:#e8efe4}
+.how-container{border-top:1px solid #cbd9c6;padding-top:30px}
+.how-heading{display:flex;align-items:baseline;gap:22px}
+.how-heading h2{margin:0;font-size:32px;letter-spacing:-.9px}
+.how-heading>p{margin:0;font-size:13px}
+.steps-grid{margin-top:24px;border:0;gap:14px}
+.step-card{min-height:158px;padding:22px 23px 20px;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;gap:8px;border:1px solid #d2dfcb;border-radius:9px;background:#f5f8f2}
+.step-number{position:static;color:#6e8e57;font-size:12px;font-weight:700;letter-spacing:.06em}
+.step-card h3{margin:4px 0 0;font-size:17px;line-height:1.3;color:#2c4936}
+.step-card p{margin:0;font-size:12px;line-height:1.55;color:#6c7d70}
+.step-icon{display:none}
+.offer-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;padding-top:4px}
+.offer-card{min-height:0;display:flex;flex-direction:column;overflow:hidden;border-color:#e0e7dd;border-radius:10px;box-shadow:0 2px 8px #203a2b0a}
+.offer-card:hover{transform:translateY(-2px);box-shadow:0 8px 20px #203a2b12}
+.offer-image-wrap{height:220px;min-height:220px;padding:18px;border:0;border-bottom:1px solid #edf0eb;background:#fff}
+.offer-image{width:100%;height:100%;object-fit:contain}
+.rank{bottom:12px;left:14px;color:#708074;text-shadow:none;font-size:12px}
+.save-button{top:13px;right:13px;width:34px;height:34px}
+.offer-body{min-height:230px;display:flex;flex-direction:column;align-items:stretch;padding:17px 18px 16px}
+.offer-topline{order:0;display:flex;justify-content:space-between;gap:8px;font-size:10px}
+.offer-body h3{order:1;min-height:44px;margin:9px 0 2px;font-size:15px;line-height:1.45}
+.offer-subtitle{order:2;min-height:30px;font-size:11px;line-height:1.45}
+.offer-price-block{order:3;min-width:0;margin:14px 0 12px;padding:12px 0 0;border:0;border-top:1px solid #edf0eb;text-align:left}
+.price-row{justify-content:flex-start}
+.price-row strong{font-size:25px}
+.converted-price-source{text-align:left;font-size:10px}
+.offer-footer{order:4;min-width:0;margin-top:auto;padding-top:12px;border-top:1px solid #edf0eb;justify-content:space-between}
+.store-info{font-size:10px}
+.store-avatar{width:28px;height:28px;font-size:9px}
+.offer-link{min-height:36px;font-size:10px}
+@media(max-width:900px){.offer-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.offer-card{display:flex}.offer-image-wrap{height:200px;min-height:200px}.offer-body{min-height:225px}.how-heading{align-items:flex-start;flex-direction:column;gap:7px}}
+@media(max-width:700px){.hero-inner{padding:34px 17px 24px}.hero-copy h1{font-size:38px}.how-section{padding:26px 0 38px}.how-container{padding-top:24px}.how-heading{gap:6px}.how-heading h2{font-size:25px}.how-heading>p{font-size:11px}.steps-grid{grid-template-columns:1fr;gap:8px;margin-top:17px}.step-card{min-height:0;padding:14px 15px;gap:5px;border-radius:8px}.step-card h3{margin:0;font-size:13px}.step-card p{font-size:10px}.step-number{font-size:10px}.offer-grid{grid-template-columns:1fr;gap:13px}.offer-card{display:grid;grid-template-columns:120px minmax(0,1fr);min-height:192px}.offer-image-wrap{height:100%;min-height:192px;padding:10px;border-right:1px solid #edf0eb;border-bottom:0}.offer-body{min-height:0;padding:12px 11px;display:flex}.offer-topline{font-size:8px}.offer-body h3{min-height:0;margin:5px 0 2px;font-size:11px}.offer-subtitle{min-height:0;font-size:8px}.offer-price-block{margin:8px 0;padding:7px 0 0}.price-row strong{font-size:16px}.converted-price-source{font-size:7px}.offer-footer{margin-top:auto;padding-top:7px}.store-info{font-size:8px}.store-avatar{width:21px;height:21px}.offer-link{min-height:30px;font-size:8px;padding:5px 7px}}
+@media(max-width:390px){.offer-card{grid-template-columns:102px minmax(0,1fr)}.offer-image-wrap{min-height:184px}.offer-body{padding:10px 9px}}
+.offer-ask-button{display:flex;min-height:38px;margin-top:10px}
+@media(max-width:700px){.offer-ask-button{min-height:34px;margin-top:8px;font-size:9px}}
+
+/* Restore the compact, continuous explainer treatment. */
+.how-section{padding:24px 0 38px;background:#e8efe4}
+.how-container{border-top:1px solid #cbd9c6;padding-top:24px}
+.how-heading{display:flex;align-items:baseline;flex-direction:row;gap:18px}
+.how-heading h2{font-size:27px}
+.how-heading>p{font-size:12px}
+.steps-grid{margin-top:17px;border-top:1px solid #cfdcc9;border-bottom:1px solid #cfdcc9;gap:0}
+.step-card{min-height:116px;padding:17px 20px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:6px;border:0;border-right:1px solid #cfdcc9;border-radius:0;background:transparent}
+.step-card:last-child{border-right:0}
+.step-number{color:#82967b;font-size:10px}
+.step-card h3{margin:0;font-size:14px}
+.step-card p{font-size:11px;line-height:1.5}
+@media(max-width:900px){.how-heading{align-items:baseline;flex-direction:row;gap:14px}}
+@media(max-width:700px){.how-section{padding:21px 0 30px}.how-container{padding-top:19px}.how-heading{align-items:flex-start;flex-direction:column;gap:5px}.how-heading h2{font-size:23px}.how-heading>p{font-size:10px}.steps-grid{grid-template-columns:1fr;gap:0;margin-top:14px}.step-card{min-height:0;padding:12px 10px;display:grid;grid-template-columns:32px 1fr;column-gap:9px;align-items:center;border-right:0;border-bottom:1px solid #cfdcc9}.step-card:last-child{border-bottom:0}.step-number{grid-row:span 2;align-self:center}.step-card h3{font-size:12px}.step-card p{font-size:10px}}
