@@ -9,6 +9,7 @@ import { searchShopifyCostaRica } from './shopifyCostaRica.service.js'
 import { searchXiaomiStore } from './xiaomiStore.service.js'
 import { searchUnimart } from './unimart.service.js'
 import { searchSteren } from './steren.service.js'
+import { searchMonge } from './monge.service.js'
 import { getCachedSearch, setCachedSearch } from './cache.service.js'
 import { expandSearchQueries } from './querySynonyms.service.js'
 
@@ -57,6 +58,7 @@ export async function searchProducts(query, market = 'cr') {
       ['Unimart', searchUnimart],
       ['Xiaomi Store Costa Rica', searchXiaomiStore],
       ['Steren Costa Rica', searchSteren],
+      ['Monge Costa Rica', searchMonge],
     ]
     const rateResult = await getUsdToCrcSaleRate().then((value) => ({ status: 'fulfilled', value }))
       .catch(() => ({ status: 'rejected' }))
