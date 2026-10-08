@@ -85,7 +85,7 @@ function OfferCard({ offer, index, saved, onSave, onAsk }) {
           </div>
           {offer.url ? <a className="offer-link" href={offer.url} target="_blank" rel="noopener noreferrer" aria-label={offer.market === 'us' ? 'Ver oferta en Google Shopping' : `Comprar en ${offer.store}`} title={offer.market === 'us' ? 'Google Shopping' : offer.store}>{offer.market === 'us' ? 'Ver oferta' : 'Comprar'} <ArrowUpRight size={16} /></a> : <span className="offer-link offer-link-disabled">Enlace no disponible</span>}
         </div>
-        <button className="offer-ask-button" type="button" onClick={() => onAsk(offer)}><MessageCircle size={15} /> Preguntar sobre este producto</button>
+        <button className="offer-ask-button" type="button" onClick={() => onAsk(offer)} aria-label={`Consultar ${offer.name} con IA`} title={`Resolver dudas sobre ${offer.name}`}><MessageCircle size={15} /> Consultar con IA</button>
       </div>
     </article>
   )
