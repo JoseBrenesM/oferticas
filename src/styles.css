@@ -276,3 +276,7 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #90b8
 .step-card p{font-size:11px;line-height:1.5}
 @media(max-width:900px){.how-heading{align-items:baseline;flex-direction:row;gap:14px}}
 @media(max-width:700px){.how-section{padding:21px 0 30px}.how-container{padding-top:19px}.how-heading{align-items:flex-start;flex-direction:column;gap:5px}.how-heading h2{font-size:23px}.how-heading>p{font-size:10px}.steps-grid{grid-template-columns:1fr;gap:0;margin-top:14px}.step-card{min-height:0;padding:12px 10px;display:grid;grid-template-columns:32px 1fr;column-gap:9px;align-items:center;border-right:0;border-bottom:1px solid #cfdcc9}.step-card:last-child{border-bottom:0}.step-number{grid-row:span 2;align-self:center}.step-card h3{font-size:12px}.step-card p{font-size:10px}}
+
+/* Keep the footer at the bottom of short first-visit pages. */
+.app-shell{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
+.app-shell>main{flex:1}
