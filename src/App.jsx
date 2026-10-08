@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   ArrowDownUp, ArrowRight, ArrowUpRight, BadgeCheck, Check,
-  ChevronDown, CircleHelp, Heart, Menu, Search, ShieldCheck, MessageCircle, Send,
+  ChevronDown, ChevronLeft, ChevronRight, CircleHelp, Heart, Menu, Search, ShieldCheck, MessageCircle, Send,
   Star, Trash2, X,
 } from 'lucide-react'
 import { formatPrice } from './data.js'
+
+const RESULTS_PER_PAGE = 12
 
 function readSavedOffers() {
   try {
@@ -67,7 +69,7 @@ function OfferCard({ offer, index, saved, onSave, onAsk }) {
         <button className={`save-button ${saved ? 'saved' : ''}`} type="button" onClick={() => onSave(offer)} aria-label={saved ? 'Quitar de guardados' : 'Guardar oferta'}>
           <Heart size={17} fill={saved ? 'currentColor' : 'none'} />
         </button>
-        <span className="rank">0{index + 1}</span>
+        <span className="rank">{String(index + 1).padStart(2, '0')}</span>
       </div>
       <div className="offer-body">
         <div className="offer-topline"><span>{offer.category}</span>{offer.rating && <span className="rating"><Star size={13} fill="currentColor" /> {offer.rating} {offer.reviews && <small>({offer.reviews})</small>}</span>}</div>
@@ -226,6 +228,7 @@ export default function App() {
   const [searchState, setSearchState] = useState('idle')
   const [searchError, setSearchError] = useState('')
   const [offersState, setOffersState] = useState([])
+  const [currentPage, setCurrentPage] = useState(1)
   const [selectedStores, setSelectedStores] = useState([])
   const [unavailableSources, setUnavailableSources] = useState([])
   const [requestId, setRequestId] = useState(0)
@@ -249,10 +252,18 @@ export default function App() {
   const visibleOffers = useMemo(() => [...offersState]
     .filter((offer) => selectedStores.length === 0 || selectedStores.includes(offer.store))
     .sort((a, b) => sort === 'Precio: mayor a menor' ? b.price - a.price : a.price - b.price), [sort, offersState, selectedStores])
+  const pageCount = Math.ceil(visibleOffers.length / RESULTS_PER_PAGE)
+  const pageOffers = visibleOffers.slice((currentPage - 1) * RESULTS_PER_PAGE, currentPage * RESULTS_PER_PAGE)
+  const firstVisibleOffer = visibleOffers.length ? (currentPage - 1) * RESULTS_PER_PAGE + 1 : 0
+  const lastVisibleOffer = Math.min(currentPage * RESULTS_PER_PAGE, visibleOffers.length)
   const convertedOffer = visibleOffers.find((offer) => offer.priceIsApproximate)
   const exchangeRateDate = convertedOffer?.exchangeRateDate
     ? new Date(`${convertedOffer.exchangeRateDate}T12:00:00Z`).toLocaleDateString('es-CR', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
     : ''
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [sort, selectedStores])
 
   function submitSearch(nextQuery = query, nextMarket = market) {
     const cleaned = nextQuery.trim()
@@ -265,6 +276,7 @@ export default function App() {
     setSubmittedQuery(cleaned)
     setLastQuery(cleaned)
     setSelectedStores([])
+    setCurrentPage(1)
     setChatOffer(null)
     const currentRequestId = requestId + 1
     setRequestId(currentRequestId)
@@ -411,13 +423,18 @@ export default function App() {
             {searchState === 'error' && <div className="search-state error-state">{searchError}</div>}
             {searchState === 'success' && unavailableSources.length > 0 && <div className="source-warning">Sin respuesta en esta búsqueda: {unavailableSources.join(', ')}. Se muestran los resultados de las demás tiendas.</div>}
             {searchState !== 'loading' && searchState !== 'error' && visibleOffers.length > 0 && <div className="offer-grid">
-              {visibleOffers.map((offer, index) => <OfferCard key={offer.id} offer={offer} index={index} saved={savedOffers.some((item) => item.id === offer.id)} onSave={toggleSave} onAsk={setChatOffer} />)}
+              {pageOffers.map((offer, index) => <OfferCard key={offer.id} offer={offer} index={(currentPage - 1) * RESULTS_PER_PAGE + index} saved={savedOffers.some((item) => item.id === offer.id)} onSave={toggleSave} onAsk={setChatOffer} />)}
             </div>}
+            {pageCount > 1 && searchState === 'success' && <nav className="results-pagination" aria-label="Paginación de resultados">
+              <button type="button" onClick={() => setCurrentPage((page) => Math.max(1, page - 1))} disabled={currentPage === 1}><ChevronLeft size={17} /> Anterior</button>
+              <span><strong>{firstVisibleOffer}–{lastVisibleOffer}</strong> de {visibleOffers.length} ofertas <small>Página {currentPage} de {pageCount}</small></span>
+              <button type="button" onClick={() => setCurrentPage((page) => Math.min(pageCount, page + 1))} disabled={currentPage === pageCount}>Siguiente <ChevronRight size={17} /></button>
+            </nav>}
             {searchState !== 'loading' && searchState !== 'error' && submittedQuery && visibleOffers.length === 0 && (offersState.length > 0
               ? <div className="search-state">No hay resultados de las tiendas seleccionadas. <button className="store-filter-reset" type="button" onClick={() => setSelectedStores([])}>Mostrar todas las tiendas</button></div>
               : <div className="search-state">No encontramos ofertas con precio y enlace verificables en {market === 'cr' ? 'tiendas costarricenses.' : 'Estados Unidos.'} Prueba otro nombre o modelo.</div>)}
 
-            {submittedQuery && <><div className="more-results"><div className="more-rule" /><span>FIN DE RESULTADOS</span><div className="more-rule" /></div>
+            {submittedQuery && (searchState !== 'success' || visibleOffers.length === 0 || currentPage === pageCount) && <><div className="more-results"><div className="more-rule" /><span>FIN DE RESULTADOS</span><div className="more-rule" /></div>
             <div className="search-again"><div className="search-again-icon"><CircleHelp size={19} /></div><div><strong>¿No encontraste lo que buscabas?</strong><span>Prueba con otra marca o modelo más específico.</span></div><button onClick={() => { document.querySelector('.hero-search input')?.focus(); window.scrollTo({ top: 0, behavior: 'smooth' }) }} type="button">Nueva búsqueda <ArrowRight size={15} /></button></div></>}
           </div>
         </section>

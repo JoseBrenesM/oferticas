@@ -10,8 +10,25 @@ import { searchXiaomiStore } from './xiaomiStore.service.js'
 import { searchUnimart } from './unimart.service.js'
 import { searchSteren } from './steren.service.js'
 import { getCachedSearch, setCachedSearch } from './cache.service.js'
+import { expandSearchQueries } from './querySynonyms.service.js'
 
 const ACCESSORY_TERMS = /\b(case|cases|cover|charger|charging|cable|protector|screen|glass|adapter|accessor(?:y|ies)|funda|fundas|estuche|cobertor|cargador|cable|protector|pantalla|adaptador|accesorio|accesorios|soporte|holder|bolsa|game\s*pad|gamepad|controlador|replacement|repuesto|applecare|warranty|garant[ií]a|plan|gift card|tarjeta de regalo|dock|docking|stand)\b|\b(estaci[oó]n\s+de\s+carga|base\s+de\s+carga|charging\s+station|charging\s+dock)\b/i
+const MAX_OFFERS_PER_STORE = 36
+
+async function searchWithSynonyms(search, query) {
+  const variants = expandSearchQueries(query)
+  const settled = await Promise.allSettled(variants.map((variant) => search(variant)))
+  const successful = settled.filter((result) => result.status === 'fulfilled')
+  if (!successful.length) throw settled[0].reason
+
+  const offers = successful.flatMap((result) => result.value)
+  const unique = new Map()
+  for (const offer of offers) {
+    const key = offer.url?.replace(/\/$/, '').toLocaleLowerCase('es-CR') || offer.id
+    if (!unique.has(key)) unique.set(key, offer)
+  }
+  return [...unique.values()]
+}
 
 function matchesRequestedIphoneVariant(query, title) {
   const requested = /\biphone\s*(\d+)\s*(pro\s*max|pro|max|air|e)?\b/i.exec(query)
@@ -28,7 +45,7 @@ function isAccessoryQuery(query) {
 }
 
 export async function searchProducts(query, market = 'cr') {
-  const cacheKey = `${market}:${query.toLocaleLowerCase('es-CR').replace(/\s+/g, ' ').trim()}`
+  const cacheKey = `v2:${market}:${query.toLocaleLowerCase('es-CR').replace(/\s+/g, ' ').trim()}`
   const cached = getCachedSearch(cacheKey)
   if (cached) return { ...cached, cached: true }
 
@@ -54,7 +71,7 @@ export async function searchProducts(query, market = 'cr') {
       unavailableSources.push('iCon Costa Rica (tipo de cambio)', 'iShop Costa Rica (tipo de cambio)')
     }
 
-    const settled = await Promise.allSettled(sources.map(([, search]) => search(query)))
+    const settled = await Promise.allSettled(sources.map(([, search]) => searchWithSynonyms(search, query)))
     const failedSources = settled.flatMap((result, index) => result.status === 'rejected' ? [sources[index][0]] : [])
     unavailableSources.push(...failedSources)
     const successfulSources = settled.filter((result) => result.status === 'fulfilled').length
@@ -78,7 +95,8 @@ export async function searchProducts(query, market = 'cr') {
       offersByStore.get(source).push(offer)
     }
     const offers = [...offersByStore.values()]
-      .flatMap((storeOffers) => storeOffers.sort((a, b) => a.price - b.price).slice(0, 6))
+      // Allow several 12-result UI pages while keeping unusually broad catalogs bounded.
+      .flatMap((storeOffers) => storeOffers.sort((a, b) => a.price - b.price).slice(0, MAX_OFFERS_PER_STORE))
       .sort((a, b) => a.price - b.price)
     const response = {
       query,
