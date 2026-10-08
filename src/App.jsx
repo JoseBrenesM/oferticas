@@ -59,7 +59,7 @@ function SearchBox({ query, setQuery, onSearch, compact = false }) {
   )
 }
 
-function OfferCard({ offer, index, saved, onSave }) {
+function OfferCard({ offer, index, saved, onSave, onAsk }) {
   return (
     <article className={`offer-card ${offer.featured ? 'offer-card-featured' : ''}`}>
       <div className="offer-image-wrap">
@@ -83,8 +83,9 @@ function OfferCard({ offer, index, saved, onSave }) {
             <span className="store-avatar" style={{ background: offer.storeColor, color: offer.storeText }}>{offer.initials}</span>
             <span>{offer.store}<BadgeCheck size={13} className="verified" /></span>
           </div>
-          {offer.url ? <a className="offer-link" href={offer.url} target="_blank" rel="noopener noreferrer">{offer.market === 'us' ? 'Ver en Google Shopping' : `Comprar en ${offer.store}`} <ArrowUpRight size={16} /></a> : <span className="offer-link offer-link-disabled">Enlace no disponible</span>}
+          {offer.url ? <a className="offer-link" href={offer.url} target="_blank" rel="noopener noreferrer" aria-label={offer.market === 'us' ? 'Ver oferta en Google Shopping' : `Comprar en ${offer.store}`} title={offer.market === 'us' ? 'Google Shopping' : offer.store}>{offer.market === 'us' ? 'Ver oferta' : 'Comprar'} <ArrowUpRight size={16} /></a> : <span className="offer-link offer-link-disabled">Enlace no disponible</span>}
         </div>
+        <button className="offer-ask-button" type="button" onClick={() => onAsk(offer)}><MessageCircle size={15} /> Preguntar sobre este producto</button>
       </div>
     </article>
   )
@@ -230,7 +231,6 @@ export default function App() {
   const [requestId, setRequestId] = useState(0)
   const [lastQuery, setLastQuery] = useState('')
   const [chatOffer, setChatOffer] = useState(null)
-  const [assistantPromptDismissed, setAssistantPromptDismissed] = useState(false)
   const [assistantSessionId] = useState(() => {
     const key = 'oferticas:assistant-session'
     let id = window.sessionStorage.getItem(key)
@@ -266,7 +266,6 @@ export default function App() {
     setLastQuery(cleaned)
     setSelectedStores([])
     setChatOffer(null)
-    setAssistantPromptDismissed(false)
     const currentRequestId = requestId + 1
     setRequestId(currentRequestId)
     setSearchState('loading')
@@ -412,7 +411,7 @@ export default function App() {
             {searchState === 'error' && <div className="search-state error-state">{searchError}</div>}
             {searchState === 'success' && unavailableSources.length > 0 && <div className="source-warning">Sin respuesta en esta búsqueda: {unavailableSources.join(', ')}. Se muestran los resultados de las demás tiendas.</div>}
             {searchState !== 'loading' && searchState !== 'error' && visibleOffers.length > 0 && <div className="offer-grid">
-              {visibleOffers.map((offer, index) => <OfferCard key={offer.id} offer={offer} index={index} saved={savedOffers.some((item) => item.id === offer.id)} onSave={toggleSave} />)}
+              {visibleOffers.map((offer, index) => <OfferCard key={offer.id} offer={offer} index={index} saved={savedOffers.some((item) => item.id === offer.id)} onSave={toggleSave} onAsk={setChatOffer} />)}
             </div>}
             {searchState !== 'loading' && searchState !== 'error' && submittedQuery && visibleOffers.length === 0 && (offersState.length > 0
               ? <div className="search-state">No hay resultados de las tiendas seleccionadas. <button className="store-filter-reset" type="button" onClick={() => setSelectedStores([])}>Mostrar todas las tiendas</button></div>
@@ -437,7 +436,6 @@ export default function App() {
 
       <footer className="site-footer"><div className="footer-inner"><Logo /><p>Menos buscar. Más encontrar.</p><span>HECHO CON <span className="footer-heart">♥</span> EN COSTA RICA · 2026</span></div></footer>
       {savedOpen && <SavedOffersModal offers={savedOffers} onClose={closeSaved} onRemove={removeSavedOffer} />}
-      {searchState === 'success' && visibleOffers.length > 0 && !chatOffer && !assistantPromptDismissed && <aside className="assistant-cta" aria-label="Asistente sobre el producto"><button className="assistant-cta-close" type="button" onClick={() => setAssistantPromptDismissed(true)} aria-label="Cerrar sugerencia"><X size={15} /></button><div><span className="assistant-cta-icon"><MessageCircle size={18} /></span><span><strong>¿Tienes dudas?</strong><small>Pregunta sobre {visibleOffers[0].name}.</small></span></div><button className="assistant-cta-action" type="button" onClick={() => setChatOffer(visibleOffers[0])}>Consultar producto <ArrowRight size={15} /></button></aside>}
       {chatOffer && <ProductChat key={`${chatOffer.id}-${submittedQuery}`} offer={chatOffer} productId={`${market}:${submittedQuery}:${chatOffer.id}`} sessionId={assistantSessionId} onClose={() => setChatOffer(null)} />}
       {notice && <div className="toast" role="status"><Check size={16} />{notice}</div>}
     </div>

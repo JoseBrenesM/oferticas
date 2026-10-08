@@ -92,6 +92,9 @@ a { color: inherit; text-decoration: none; }
 .offer-link{width:auto;min-height:38px;height:auto;flex:none;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:8px 10px;border:1px solid #dbe6d6;border-radius:7px;background:#f7faf4;color:#31563c;font-size:11px;font-weight:700;line-height:1.25;text-align:center;text-decoration:none;white-space:nowrap;transition:background .15s,border-color .15s,color .15s}
 .offer-link:hover{border-color:#b8d0aa;background:#edf5e7;color:#23462f}
 .offer-link-disabled{min-height:38px;padding:8px 10px;font-size:10px;white-space:normal}
+.offer-ask-button{width:100%;min-height:38px;margin-top:9px;display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid #e4eadf;border-radius:7px;background:#fff;color:#416247;font-size:11px;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+.offer-ask-button:hover{border-color:#bad0ad;background:#f3f8ee;color:#294a34}
+.offer-ask-button:focus-visible{outline:3px solid #91b86c;outline-offset:2px}
 .product-chat{width:min(100%,490px)}
 .chat-context-note{padding:12px 20px;color:#536458;font-size:12px;line-height:1.55}
 .chat-welcome{max-width:320px;font-size:15px;line-height:1.45}
