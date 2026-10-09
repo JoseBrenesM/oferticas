@@ -203,6 +203,7 @@ body{background:#f4f6f2}
 .footer-inner .brand{font-size:20px}
 .footer-inner p{color:#c4d2c5;font-size:10px}
 .footer-inner>span{font-size:8px}
+.footer-inner>span a{color:#d4e8b5;text-decoration:underline;text-underline-offset:2px}
 .search-state{color:#647267}
 .error-state{border-radius:7px}
 button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #90b84c;outline-offset:3px}
@@ -280,3 +281,108 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #90b8
 /* Keep the footer at the bottom of short first-visit pages. */
 .app-shell{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
 .app-shell>main{flex:1}
+
+/* Slightly larger supporting text for comfortable reading. */
+.demo-ribbon{font-size:10px}
+.main-nav a{font-size:14px}
+.saved-link,.location-pill{font-size:13px}
+.location-pill{font-size:12px}
+.hero-kicker,.section-kicker{font-size:10px}
+.hero-description{font-size:15px}
+.search-box input{font-size:14px}
+.search-submit{font-size:13px}
+.trending-label{font-size:9px}
+.trending-row button{font-size:11px}
+.hero-trust{font-size:11px}
+.results-subtitle{font-size:13px}
+.sort-area,.sort-button,.sort-menu button{font-size:11px}
+.category-chip{font-size:11px}
+.category-chip small{font-size:9px}
+.offer-topline,.rating small{font-size:9px}
+.offer-badge{font-size:9px}
+.offer-body h3{font-size:13px}
+.offer-subtitle{font-size:10px}
+.old-price{font-size:10px}
+.price-note{font-size:8px}
+.store-info{font-size:10px}
+.store-avatar{font-size:9px}
+.how-heading>p{font-size:13px}
+.step-card h3{font-size:15px}
+.step-card p{font-size:12px}
+.footer-inner p{font-size:11px}
+.footer-inner>span{font-size:10px}
+.modal-offer{font-size:11px}
+.demo-modal>p:not(.eyebrow){font-size:13px}
+.modal-action{font-size:12px}
+
+@media(max-width:700px){
+  .demo-ribbon{font-size:8px}
+  .main-nav a{font-size:15px}
+  .location-pill{font-size:10px}
+  .hero-kicker{font-size:9px}
+  .hero-description{font-size:13px}
+  .search-box input{font-size:12px}
+  .search-submit{font-size:11px}
+  .trending-row button{font-size:9px}
+  .trending-label,.hero-trust{font-size:8px}
+  .results-subtitle{font-size:11px}
+  .category-chip{font-size:10px}
+  .category-chip small{font-size:8px}
+  .offer-topline,.rating small{font-size:8px}
+  .offer-badge{font-size:8px}
+  .offer-body h3{font-size:11px}
+  .offer-subtitle{font-size:9px}
+  .old-price{font-size:9px}
+  .price-note{font-size:7px}
+  .store-info{font-size:8px}
+  .store-avatar{font-size:8px}
+  .how-heading>p{font-size:11px}
+  .step-card h3{font-size:13px}
+  .step-card p{font-size:11px}
+  .footer-inner p{font-size:9px}
+  .footer-inner>span{font-size:8px}
+}
+
+.stores-section{padding:42px 0 48px;background:#fcfdfa;border-top:1px solid #e6ece2}
+.stores-container{max-width:1136px;margin:auto;padding:0 26px}
+.stores-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:20px}
+.stores-eyebrow{color:#79915f;font-size:10px;font-weight:700;letter-spacing:1.3px}
+.stores-heading h2{margin:7px 0 0;color:#1d3427;font:700 25px/1.25 Manrope,sans-serif;letter-spacing:-.6px}
+.stores-heading>p{max-width:390px;margin:0;color:#718075;font-size:13px;line-height:1.55}
+.stores-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.store-link-card{min-height:48px;padding:0 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid #e4eae0;border-radius:7px;background:#fff;color:#344b39;font-size:13px;transition:border-color .2s,background .2s,transform .2s}
+.store-link-card svg{flex-shrink:0;color:#799a5d}
+.store-link-card:hover{border-color:#b8cca7;background:#f7faf4;transform:translateY(-1px)}
+.stores-contact{margin-top:19px;padding:17px 19px;display:flex;align-items:center;justify-content:space-between;gap:18px;border:1px solid #dce7d5;border-radius:8px;background:#f2f6ee}
+.stores-contact>div{display:grid;gap:4px}
+.stores-contact strong{color:#2c4936;font-size:14px}
+.stores-contact span{color:#708072;font-size:12px;line-height:1.45}
+.stores-contact>a{flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 13px;border-radius:6px;background:#204a37;color:#fff;font-size:12px;font-weight:600;transition:background .2s}
+.stores-contact>a:hover{background:#2c654a}
+@media(max-width:700px){
+  .stores-section{padding:30px 0 34px}
+  .stores-container{padding:0 17px}
+  .stores-heading{align-items:flex-start;flex-direction:column;gap:7px;margin-bottom:15px}
+  .stores-heading h2{font-size:22px}
+  .stores-heading>p{font-size:12px}
+  .stores-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  .store-link-card{min-height:44px;padding:0 10px;font-size:11px}
+  .stores-contact{align-items:flex-start;flex-direction:column;margin-top:15px;padding:14px;gap:12px}
+  .stores-contact strong{font-size:13px}
+  .stores-contact span{font-size:11px}
+  .stores-contact>a{font-size:11px}
+}
+
+.store-growth-card{min-height:48px;padding:9px 14px;display:flex;flex-direction:column;justify-content:center;gap:3px;border:1px dashed #bfd0b3;border-radius:7px;background:#f4f7f1}
+.store-growth-card span{color:#79915f;font-size:8px;font-weight:700;letter-spacing:.9px}
+.store-growth-card strong{color:#3e5844;font-size:11px;font-weight:600;line-height:1.35}
+.saved-offer-actions{min-width:132px;gap:10px}
+.saved-open-link,.saved-remove-button{min-width:122px;min-height:42px;padding:9px 12px;border:1px solid #e1e8de;border-radius:6px;font-size:11px;text-decoration:none}
+.saved-open-link{background:#f5f8f2;color:#315e3e}
+.saved-open-link:hover{background:#eaf2e3;text-decoration:none}
+.saved-remove-button{background:#fff;color:#68766b}
+@media(max-width:700px){.store-growth-card{min-height:44px;padding:8px 10px}.store-growth-card span{font-size:7px}.store-growth-card strong{font-size:10px}}
+@media(max-width:600px){
+  .saved-offer-actions{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:100%;min-width:0;margin-top:2px}
+  .saved-open-link,.saved-remove-button{width:100%;min-width:0;min-height:44px;padding:10px;font-size:11px}
+}

@@ -46,7 +46,8 @@ export async function findProductKnowledge(productKey) {
       sources: Array.isArray(document.sources) ? document.sources : [],
       verifiedAt: document.verifiedAt || null,
     }
-  } catch {
+  } catch (error) {
+    console.error('Mongo product knowledge read failed:', error?.name, error?.message)
     return null
   }
 }
@@ -86,8 +87,9 @@ export async function mergeProductKnowledge({ productKey, identity, facts, sourc
       { upsert: true },
     )
     return true
-  } catch {
+  } catch (error) {
     // Persistence is an optional optimization; successful research still answers the user.
+    console.error('Mongo product knowledge write failed:', error?.name, error?.message)
     return false
   }
 }

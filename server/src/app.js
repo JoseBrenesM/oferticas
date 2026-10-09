@@ -38,7 +38,9 @@ app.use('/api/products', productsRouter)
 app.use('/api/products', productsAskRouter)
 
 app.use((error, _request, response, _next) => {
-  console.error('Unhandled API error:', error.message)
+  // Keep the useful stack in server logs so local/Vercel failures can be traced to source.
+  // Do not return internal details to the browser.
+  console.error('Unhandled API error:', error?.stack || error?.message || error)
   const statusCode = Number.isInteger(error.statusCode) ? error.statusCode : 500
   const message = statusCode >= 500 && statusCode !== 502 && statusCode !== 503 && statusCode !== 504
     ? 'Ocurrió un error al procesar la solicitud.'
