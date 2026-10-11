@@ -386,3 +386,30 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #90b8
   .saved-offer-actions{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:100%;min-width:0;margin-top:2px}
   .saved-open-link,.saved-remove-button{width:100%;min-width:0;min-height:44px;padding:10px;font-size:11px}
 }
+
+@media(max-width:700px){
+  .offer-footer{align-items:stretch;flex-direction:column;gap:8px}
+  .store-info{width:100%;flex:none}
+  .offer-link{width:100%;min-height:36px;justify-content:center}
+}
+
+.filter-mobile-control{display:none}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:700px){
+  .store-filter .filter-desktop-options{display:none}
+  .store-filter .filter-mobile-control{display:block;width:100%}
+  .mobile-select-wrap{position:relative}
+  .mobile-select-wrap select,.mobile-store-dropdown summary{width:100%;min-height:40px;padding:0 35px 0 11px;border:1px solid #dfe6dc;border-radius:6px;background:#fff;color:#354c3c;font:inherit;font-size:12px;text-align:left}
+  .mobile-select-wrap select{appearance:none}
+  .mobile-select-wrap svg{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#637367;pointer-events:none}
+  .mobile-store-dropdown details{position:relative}
+  .mobile-store-dropdown summary{display:flex;align-items:center;justify-content:space-between;gap:8px;list-style:none;cursor:pointer}
+  .mobile-store-dropdown summary::-webkit-details-marker{display:none}
+  .mobile-store-dropdown details[open] summary svg{transform:rotate(180deg)}
+  .mobile-store-options{position:absolute;top:calc(100% + 5px);left:0;right:0;z-index:20;max-height:230px;overflow:auto;padding:5px;border:1px solid #dfe6dc;border-radius:7px;background:#fff;box-shadow:0 8px 20px #203b281c}
+  .mobile-store-option{display:flex;align-items:center;gap:9px;min-height:40px;padding:6px 7px;border-radius:5px;color:#46594b;font-size:12px}
+  .mobile-store-option+ .mobile-store-option{border-top:1px solid #f0f2ef}
+  .mobile-store-option input{width:16px;height:16px;flex:0 0 auto;margin:0;accent-color:#416b42}
+  .mobile-store-option span{min-width:0;flex:1}
+  .mobile-store-option small{min-width:22px;padding:3px 5px;border-radius:4px;background:#f1f4ef;color:#718073;font-size:10px;text-align:center}
+}

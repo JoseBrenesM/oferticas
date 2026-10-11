@@ -5,6 +5,7 @@ import {
   Star, Trash2, X, MessageCircle, Send,
 } from 'lucide-react'
 import { formatPrice } from './data.js'
+import { classifyOffer, sortCategoriesByRelevance } from './productCategories.js'
 
 const RESULTS_PER_PAGE = 12
 const COSTA_RICA_STORES = [
@@ -66,7 +67,7 @@ function OfferCard({ offer, index, saved, onSave, onAsk }) {
         <span className="rank">{String(index + 1).padStart(2, '0')}</span>
       </div>
       <div className="offer-body">
-        <div className="offer-topline"><span>{offer.category}</span>{offer.rating && <span className="rating"><Star size={13} fill="currentColor" /> {offer.rating} {offer.reviews && <small>({offer.reviews})</small>}</span>}</div>
+        <div className="offer-topline"><span>{offer.resultCategory}</span>{offer.rating && <span className="rating"><Star size={13} fill="currentColor" /> {offer.rating} {offer.reviews && <small>({offer.reviews})</small>}</span>}</div>
         <h3>{offer.name}</h3>
         <p className="offer-subtitle">{offer.subtitle}</p>
         <div className="offer-price-block">
@@ -200,6 +201,7 @@ export default function App() {
   const resultsHeadingRef = useRef(null)
   const pageNavigationPending = useRef(false)
   const [selectedStores, setSelectedStores] = useState([])
+  const [selectedCategory, setSelectedCategory] = useState('')
   const [unavailableSources, setUnavailableSources] = useState([])
   const [requestId, setRequestId] = useState(0)
   const [lastQuery, setLastQuery] = useState('')
@@ -216,9 +218,16 @@ export default function App() {
     for (const offer of offersState) counts.set(offer.store, (counts.get(offer.store) || 0) + 1)
     return [...counts].sort(([storeA], [storeB]) => storeA.localeCompare(storeB, 'es-CR'))
   }, [offersState])
-  const visibleOffers = useMemo(() => [...offersState]
+  const categorizedOffers = useMemo(() => offersState.map((offer) => ({ ...offer, resultCategory: classifyOffer(offer) })), [offersState])
+  const availableCategories = useMemo(() => {
+    const counts = new Map()
+    for (const offer of categorizedOffers) counts.set(offer.resultCategory, (counts.get(offer.resultCategory) || 0) + 1)
+    return sortCategoriesByRelevance([...counts], submittedQuery)
+  }, [categorizedOffers, submittedQuery])
+  const visibleOffers = useMemo(() => [...categorizedOffers]
     .filter((offer) => selectedStores.length === 0 || selectedStores.includes(offer.store))
-    .sort((a, b) => sort === 'Precio: mayor a menor' ? b.price - a.price : a.price - b.price), [sort, offersState, selectedStores])
+    .filter((offer) => !selectedCategory || offer.resultCategory === selectedCategory)
+    .sort((a, b) => sort === 'Precio: mayor a menor' ? b.price - a.price : a.price - b.price), [sort, categorizedOffers, selectedStores, selectedCategory])
   const pageCount = Math.ceil(visibleOffers.length / RESULTS_PER_PAGE)
   const pageOffers = visibleOffers.slice((currentPage - 1) * RESULTS_PER_PAGE, currentPage * RESULTS_PER_PAGE)
   const firstVisibleOffer = visibleOffers.length ? (currentPage - 1) * RESULTS_PER_PAGE + 1 : 0
@@ -230,7 +239,7 @@ export default function App() {
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [sort, selectedStores])
+  }, [sort, selectedStores, selectedCategory])
 
   useEffect(() => {
     if (!pageNavigationPending.current) return
@@ -260,6 +269,7 @@ export default function App() {
     setLastQuery(cleaned)
     setChatOffer(null)
     setSelectedStores([])
+    setSelectedCategory('')
     setCurrentPage(1)
     const currentRequestId = requestId + 1
     setRequestId(currentRequestId)
@@ -296,6 +306,7 @@ export default function App() {
       setSearchState('idle')
       setSubmittedQuery('')
       setSearchError('')
+      setSelectedCategory('')
     }
   }
 
@@ -377,9 +388,29 @@ export default function App() {
               </div>}
             </div>
 
+            {searchState === 'success' && availableCategories.length > 1 && <div className="store-filter category-filter" role="group" aria-label="Filtrar resultados por tipo de producto">
+              <span className="store-filter-label">Tipo de producto</span>
+              <div className="store-filter-options filter-desktop-options">
+                <button className={`store-filter-chip ${selectedCategory === '' ? 'selected' : ''}`} type="button" aria-pressed={selectedCategory === ''} onClick={() => setSelectedCategory('')}>
+                  Todos <small>{offersState.length}</small>
+                </button>
+                {availableCategories.map(([category, count]) => <button key={category} className={`store-filter-chip ${selectedCategory === category ? 'selected' : ''}`} type="button" aria-pressed={selectedCategory === category} onClick={() => setSelectedCategory((current) => current === category ? '' : category)}>
+                  {category} <small>{count}</small>
+                </button>)}
+              </div>
+              <label className="filter-mobile-control mobile-select-wrap">
+                <span className="sr-only">Tipo de producto</span>
+                <select value={selectedCategory} onChange={(event) => setSelectedCategory(event.target.value)}>
+                  <option value="">Todos los productos ({offersState.length})</option>
+                  {availableCategories.map(([category, count]) => <option key={category} value={category}>{category} ({count})</option>)}
+                </select>
+                <ChevronDown size={15} aria-hidden="true" />
+              </label>
+            </div>}
+
             {searchState === 'success' && availableStores.length > 0 && <div className="store-filter" role="group" aria-label="Filtrar resultados por tienda">
               <span className="store-filter-label">Tiendas</span>
-              <div className="store-filter-options">
+              <div className="store-filter-options filter-desktop-options">
                 <button className={`store-filter-chip ${selectedStores.length === 0 ? 'selected' : ''}`} type="button" aria-pressed={selectedStores.length === 0} onClick={() => setSelectedStores([])}>
                   Todas <small>{offersState.length}</small>
                 </button>
@@ -390,11 +421,28 @@ export default function App() {
                   </button>
                 })}
               </div>
+              <div className="filter-mobile-control mobile-store-dropdown">
+                <details>
+                  <summary>
+                    <span>{selectedStores.length === 0 ? 'Todas las tiendas' : selectedStores.length === 1 ? selectedStores[0] : `${selectedStores.length} tiendas seleccionadas`}</span>
+                    <ChevronDown size={15} aria-hidden="true" />
+                  </summary>
+                  <div className="mobile-store-options">
+                    <label className="mobile-store-option">
+                      <input type="checkbox" aria-label={`Todas las tiendas (${offersState.length})`} checked={selectedStores.length === 0} onChange={() => setSelectedStores([])} />
+                      <span>Todas las tiendas</span><small>{offersState.length}</small>
+                    </label>
+                    {availableStores.map(([store, count]) => <label className="mobile-store-option" key={store}>
+                      <input type="checkbox" aria-label={`${store} (${count})`} checked={selectedStores.includes(store)} onChange={() => setSelectedStores((current) => current.includes(store) ? current.filter((item) => item !== store) : [...current, store])} />
+                      <span>{store}</span><small>{count}</small>
+                    </label>)}
+                  </div>
+                </details>
+              </div>
             </div>}
 
             {searchState === 'loading' && <div className="search-state"><span className="loading-spinner" />Revisando precios en las tiendas…</div>}
             {searchState === 'error' && <div className="search-state error-state">{searchError}</div>}
-            {searchState === 'success' && unavailableSources.length > 0 && <div className="source-warning">Sin respuesta en esta búsqueda: {unavailableSources.join(', ')}. Se muestran los resultados de las demás tiendas.</div>}
             {searchState !== 'loading' && searchState !== 'error' && visibleOffers.length > 0 && <div className="offer-grid">
               {pageOffers.map((offer, index) => <OfferCard key={offer.id} offer={offer} index={(currentPage - 1) * RESULTS_PER_PAGE + index} saved={savedOffers.some((item) => item.id === offer.id)} onSave={toggleSave} onAsk={setChatOffer} />)}
             </div>}
@@ -404,8 +452,8 @@ export default function App() {
               <button type="button" onClick={() => navigateToPage(currentPage + 1)} disabled={currentPage === pageCount}>Siguiente <ChevronRight size={17} /></button>
             </nav>}
             {searchState !== 'loading' && searchState !== 'error' && submittedQuery && visibleOffers.length === 0 && (offersState.length > 0
-              ? <div className="search-state">No hay resultados de las tiendas seleccionadas. <button className="store-filter-reset" type="button" onClick={() => setSelectedStores([])}>Mostrar todas las tiendas</button></div>
-              : <div className="search-state">No encontramos opciones para esa búsqueda en {market === 'cr' ? 'tiendas de Costa Rica.' : 'tiendas de Estados Unidos.'} Prueba con otro nombre o modelo.</div>)}
+              ? <div className="search-state">No hay resultados con estos filtros. <button className="store-filter-reset" type="button" onClick={() => { setSelectedStores([]); setSelectedCategory('') }}>Quitar filtros</button></div>
+              : <div className="search-state">{unavailableSources.length > 0 ? 'No encontramos ofertas y algunas tiendas no respondieron. Prueba de nuevo en un momento o intenta otra búsqueda.' : `No encontramos opciones para esa búsqueda en ${market === 'cr' ? 'tiendas de Costa Rica.' : 'tiendas de Estados Unidos.'} Prueba con otro nombre o modelo.`}</div>)}
 
             {submittedQuery && (searchState !== 'success' || visibleOffers.length === 0 || currentPage === pageCount) && <><div className="more-results"><div className="more-rule" /><span>Fin de resultados</span><div className="more-rule" /></div>
             <div className="search-again"><div className="search-again-icon"><CircleHelp size={19} /></div><div><strong>¿No encontraste lo que buscabas?</strong><span>Prueba con otra marca o modelo más específico.</span></div><button onClick={() => { document.querySelector('.hero-search input')?.focus(); window.scrollTo({ top: 0, behavior: 'smooth' }) }} type="button">Nueva búsqueda <ArrowRight size={15} /></button></div></>}
